@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php artisan:*)",
+      "Bash(composer require:*)",
+      "Bash(test:*)",
+      "Bash(cat:*)",
+      "Bash(xargs cat:*)",
+      "Bash(xargs:*)",
+      "Bash(sqlite3:*)",
+      "Bash(NTFY_TOPIC=chit php artisan notes:send-reminders:*)",
+      "Bash(curl -d \"Test notification from command line\" https://ntfy.sh/chit)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
