@@ -55,6 +55,11 @@ class SendNoteReminders extends Command
                 if ($lockedNote->last_notification_sent_at) {
                     $lastSent = $lockedNote->last_notification_sent_at;
 
+                    // Prevent duplicate sends within 5 minutes (safety net for race conditions)
+                    if ($lastSent->diffInMinutes(now()) < 5) {
+                        return;
+                    }
+
                     // If recurring, check if enough time has passed
                     if ($lockedNote->notification_recurrence) {
                         $shouldSend = match ($lockedNote->notification_recurrence) {
@@ -74,12 +79,12 @@ class SendNoteReminders extends Command
                     }
                 }
 
+                // Update last sent timestamp BEFORE sending to prevent duplicates
+                $lockedNote->update(['last_notification_sent_at' => now()]);
+
                 // Send notification
                 Notification::route('ntfy', config('ntfy-notification-channel.topic'))
                     ->notify(new NoteReminderNotification($lockedNote));
-
-                // Update last sent timestamp
-                $lockedNote->update(['last_notification_sent_at' => now()]);
 
                 // If it's a one-time notification, schedule next occurrence or disable
                 if ($lockedNote->notification_recurrence) {

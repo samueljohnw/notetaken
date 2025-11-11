@@ -135,8 +135,9 @@ class NoteController extends Controller
             'notification_recurrence' => $validated['notification_recurrence'] === 'none' ? null : ($validated['notification_recurrence'] ?? null),
         ];
 
-        // If notification datetime changed, reset last_notification_sent_at
-        if ($notificationDatetime && $note->notification_datetime != $notificationDatetime) {
+        // Always reset last_notification_sent_at when updating notification settings
+        // This ensures edited notifications are treated as new
+        if ($request->boolean('has_notification') && $notificationDatetime) {
             $updateData['last_notification_sent_at'] = null;
         }
 
