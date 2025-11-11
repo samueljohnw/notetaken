@@ -18,7 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('notes:send-reminders')
             ->everyMinute()
             ->withoutOverlapping()
-            ->runInBackground();
+            ->appendOutputTo(storage_path('logs/scheduler.log'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

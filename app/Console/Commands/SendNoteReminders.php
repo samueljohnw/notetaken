@@ -39,6 +39,8 @@ class SendNoteReminders extends Command
             ->where('notification_datetime', '>=', $sixtyMinutesAgo)
             ->get();
 
+        $this->info("Found {$notes->count()} note(s) with due notifications.");
+
         $sentCount = 0;
 
         foreach ($notes as $note) {
@@ -66,10 +68,12 @@ class SendNoteReminders extends Command
                         };
 
                         if (!$shouldSend) {
+                            $this->info("Skipping '{$lockedNote->title}' - recurring reminder not due yet (last sent: {$lastSent})");
                             return;
                         }
                     } else {
                         // One-time notification already sent
+                        $this->info("Skipping '{$lockedNote->title}' - one-time notification already sent at {$lastSent}");
                         return;
                     }
                 }
