@@ -15,7 +15,10 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withSchedule(function (Schedule $schedule): void {
-        $schedule->command('notes:send-reminders')->everyMinute();
+        $schedule->command('notes:send-reminders')
+            ->everyMinute()
+            ->withoutOverlapping()
+            ->runInBackground();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
