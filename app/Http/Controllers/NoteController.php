@@ -125,14 +125,22 @@ class NoteController extends Controller
                 ->addMinutes($timezoneOffset);
         }
 
-        $note->update([
+        // Prepare update data
+        $updateData = [
             'title' => $validated['title'],
             'content' => $validated['content'],
             'attachments' => $attachmentPaths,
             'has_notification' => $request->boolean('has_notification'),
             'notification_datetime' => $notificationDatetime,
             'notification_recurrence' => $validated['notification_recurrence'] === 'none' ? null : ($validated['notification_recurrence'] ?? null),
-        ]);
+        ];
+
+        // If notification datetime changed, reset last_notification_sent_at
+        if ($notificationDatetime && $note->notification_datetime != $notificationDatetime) {
+            $updateData['last_notification_sent_at'] = null;
+        }
+
+        $note->update($updateData);
 
         return redirect()->route('notes.index')->with('success', 'Note updated successfully!');
     }
