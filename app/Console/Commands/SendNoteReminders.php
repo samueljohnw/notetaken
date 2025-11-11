@@ -55,18 +55,13 @@ class SendNoteReminders extends Command
                 if ($lockedNote->last_notification_sent_at) {
                     $lastSent = $lockedNote->last_notification_sent_at;
 
-                    // Prevent duplicate sends within 5 minutes (safety net for race conditions)
-                    if ($lastSent->diffInMinutes(now()) < 5) {
-                        return;
-                    }
-
                     // If recurring, check if enough time has passed
                     if ($lockedNote->notification_recurrence) {
                         $shouldSend = match ($lockedNote->notification_recurrence) {
-                            'daily' => $lastSent->addDay()->isPast(),
-                            'weekly' => $lastSent->addWeek()->isPast(),
-                            'monthly' => $lastSent->addMonth()->isPast(),
-                            'yearly' => $lastSent->addYear()->isPast(),
+                            'daily' => $lastSent->copy()->addDay()->isPast(),
+                            'weekly' => $lastSent->copy()->addWeek()->isPast(),
+                            'monthly' => $lastSent->copy()->addMonth()->isPast(),
+                            'yearly' => $lastSent->copy()->addYear()->isPast(),
                             default => false,
                         };
 
