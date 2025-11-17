@@ -25,7 +25,9 @@ class NoteController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'content' => 'required|string',
+            'content' => 'nullable|string',
+            'is_checklist' => 'boolean',
+            'checklist_items' => 'nullable|json',
             'has_notification' => 'boolean',
             'notification_datetime' => 'nullable|date',
             'notification_recurrence' => 'nullable|in:none,daily,weekly,monthly,yearly',
@@ -60,9 +62,18 @@ class NoteController extends Controller
                 ->addMinutes($timezoneOffset);
         }
 
+        // Handle checklist data
+        $isChecklist = $request->boolean('is_checklist');
+        $checklistItems = null;
+        if ($isChecklist && $request->filled('checklist_items')) {
+            $checklistItems = json_decode($validated['checklist_items'], true);
+        }
+
         $note = Note::create([
             'title' => $validated['title'],
-            'content' => $validated['content'],
+            'content' => $validated['content'] ?? '',
+            'is_checklist' => $isChecklist,
+            'checklist_items' => $checklistItems,
             'markdown_file_path' => '', // Will be set by the model
             'attachments' => $attachmentPaths,
             'has_notification' => $request->boolean('has_notification'),
@@ -88,7 +99,9 @@ class NoteController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'content' => 'required|string',
+            'content' => 'nullable|string',
+            'is_checklist' => 'boolean',
+            'checklist_items' => 'nullable|json',
             'has_notification' => 'boolean',
             'notification_datetime' => 'nullable|date',
             'notification_recurrence' => 'nullable|in:none,daily,weekly,monthly,yearly',
@@ -137,10 +150,19 @@ class NoteController extends Controller
                 ->addMinutes($timezoneOffset);
         }
 
+        // Handle checklist data
+        $isChecklist = $request->boolean('is_checklist');
+        $checklistItems = null;
+        if ($isChecklist && $request->filled('checklist_items')) {
+            $checklistItems = json_decode($validated['checklist_items'], true);
+        }
+
         // Prepare update data
         $updateData = [
             'title' => $validated['title'],
-            'content' => $validated['content'],
+            'content' => $validated['content'] ?? '',
+            'is_checklist' => $isChecklist,
+            'checklist_items' => $checklistItems,
             'attachments' => $attachmentPaths,
             'has_notification' => $request->boolean('has_notification'),
             'notification_datetime' => $notificationDatetime,
@@ -158,6 +180,11 @@ class NoteController extends Controller
         // Sync categories
         $note->categories()->sync($request->input('categories', []));
 
+        // Return JSON for AJAX requests (autosave), redirect for regular form submissions
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Note saved successfully']);
+        }
+
         return redirect()->route('notes.index')->with('success', 'Note updated successfully!');
     }
 
@@ -173,5 +200,28 @@ class NoteController extends Controller
         $note->delete();
 
         return redirect()->route('notes.index')->with('success', 'Note deleted successfully!');
+    }
+
+    public function updateChecklistItem(Request $request, Note $note, int $itemIndex)
+    {
+        $validated = $request->validate([
+            'checked' => 'required|boolean',
+        ]);
+
+        if (!$note->is_checklist || !$note->checklist_items) {
+            return response()->json(['error' => 'Not a checklist note'], 400);
+        }
+
+        $items = $note->checklist_items;
+
+        if (!isset($items[$itemIndex])) {
+            return response()->json(['error' => 'Item not found'], 404);
+        }
+
+        $items[$itemIndex]['checked'] = $validated['checked'];
+        $note->checklist_items = $items;
+        $note->save();
+
+        return response()->json(['success' => true]);
     }
 }

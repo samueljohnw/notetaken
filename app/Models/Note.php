@@ -5,13 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\Storage;
-use League\CommonMark\CommonMarkConverter;
+use League\CommonMark\Environment\Environment;
+use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
+use League\CommonMark\Extension\GithubFlavoredMarkdownExtension;
+use League\CommonMark\MarkdownConverter;
 
 class Note extends Model
 {
     protected $fillable = [
         'title',
         'content',
+        'is_checklist',
+        'checklist_items',
         'markdown_file_path',
         'attachments',
         'has_notification',
@@ -21,6 +26,8 @@ class Note extends Model
 
     protected $casts = [
         'attachments' => 'array',
+        'is_checklist' => 'boolean',
+        'checklist_items' => 'array',
         'has_notification' => 'boolean',
         'notification_datetime' => 'datetime',
     ];
@@ -84,10 +91,16 @@ class Note extends Model
 
     public function getRenderedContentAttribute(): string
     {
-        $converter = new CommonMarkConverter([
+        // Configure environment with GFM extension for task lists
+        $environment = new Environment([
             'html_input' => 'strip',
             'allow_unsafe_links' => false,
         ]);
+
+        $environment->addExtension(new CommonMarkCoreExtension());
+        $environment->addExtension(new GithubFlavoredMarkdownExtension());
+
+        $converter = new MarkdownConverter($environment);
 
         return $converter->convert($this->content)->getContent();
     }

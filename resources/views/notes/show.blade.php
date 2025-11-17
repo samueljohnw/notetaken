@@ -6,6 +6,25 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $note->title }} - Notes App</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>
+        /* Task list styling */
+        .prose ul.contains-task-list {
+            list-style: none;
+            padding-left: 0;
+        }
+        .prose ul.contains-task-list li.task-list-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+        .prose ul.contains-task-list li.task-list-item input[type="checkbox"] {
+            margin-right: 0.5rem;
+            margin-top: 0.25rem;
+            width: 1rem;
+            height: 1rem;
+            cursor: default;
+        }
+    </style>
 </head>
 <body class="bg-gray-900 min-h-screen">
     <div class="container mx-auto px-4 py-8 max-w-4xl">
@@ -63,10 +82,29 @@
                 </div>
             </div>
 
-            <!-- Rendered Markdown Content -->
-            <div class="prose prose-invert prose-lg max-w-none mb-6">
-                {!! $note->rendered_content !!}
-            </div>
+            <!-- Content -->
+            @if($note->is_checklist && $note->checklist_items)
+                <!-- Interactive Checklist -->
+                <div class="space-y-2 mb-6">
+                    @foreach($note->checklist_items as $index => $item)
+                        <div class="flex items-start gap-3 p-3 bg-gray-900 border border-gray-700 rounded hover:bg-gray-800/50 transition">
+                            <input
+                                type="checkbox"
+                                {{ $item['checked'] ? 'checked' : '' }}
+                                class="mt-1 w-5 h-5 cursor-pointer accent-blue-500 checklist-item-checkbox"
+                                data-note-id="{{ $note->id }}"
+                                data-item-index="{{ $index }}"
+                            >
+                            <span class="flex-1 text-gray-200 {{ $item['checked'] ? 'line-through opacity-60' : '' }} checklist-item-text">{{ $item['text'] }}</span>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <!-- Rendered Markdown Content -->
+                <div class="prose prose-invert prose-lg max-w-none mb-6">
+                    {!! $note->rendered_content !!}
+                </div>
+            @endif
 
             <!-- Attachments -->
             @if($note->attachments && count($note->attachments) > 0)
@@ -155,6 +193,54 @@
                 };
                 element.textContent = date.toLocaleString('en-US', options);
             }
+        });
+
+        // Handle checklist checkbox toggling
+        document.querySelectorAll('.checklist-item-checkbox').forEach(function(checkbox) {
+            checkbox.addEventListener('change', async function() {
+                const noteId = this.getAttribute('data-note-id');
+                const itemIndex = this.getAttribute('data-item-index');
+                const checked = this.checked;
+
+                // Update UI immediately
+                const textSpan = this.parentElement.querySelector('.checklist-item-text');
+                if (checked) {
+                    textSpan.classList.add('line-through', 'opacity-60');
+                } else {
+                    textSpan.classList.remove('line-through', 'opacity-60');
+                }
+
+                // Save to server
+                try {
+                    const response = await fetch(`/notes/${noteId}/checklist/${itemIndex}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        },
+                        body: JSON.stringify({ checked: checked })
+                    });
+
+                    if (!response.ok) {
+                        // Revert UI if request failed
+                        checkbox.checked = !checked;
+                        if (!checked) {
+                            textSpan.classList.add('line-through', 'opacity-60');
+                        } else {
+                            textSpan.classList.remove('line-through', 'opacity-60');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error updating checklist:', error);
+                    // Revert UI on error
+                    checkbox.checked = !checked;
+                    if (!checked) {
+                        textSpan.classList.add('line-through', 'opacity-60');
+                    } else {
+                        textSpan.classList.remove('line-through', 'opacity-60');
+                    }
+                }
+            });
         });
     </script>
 </body>
