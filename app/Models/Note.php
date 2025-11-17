@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\Storage;
 use League\CommonMark\CommonMarkConverter;
 
@@ -89,5 +90,10 @@ class Note extends Model
         ]);
 
         return $converter->convert($this->content)->getContent();
+    }
+
+    public function categories(): BelongsToMany
+    {
+        return $this->belongsToMany(Category::class, 'note_category');
     }
 }

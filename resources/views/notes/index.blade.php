@@ -8,7 +8,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-gray-900 min-h-screen">
-    <div class="container mx-auto px-4 py-8 max-w-6xl">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
         <!-- Success Message -->
         @if(session('success'))
             <div class="bg-green-900 border border-green-600 text-green-200 px-4 py-3 rounded mb-6">
@@ -62,6 +62,40 @@
                     <h3 class="text-xs font-medium text-gray-300">Existing Attachments</h3>
                     <ul id="existingAttachments" class="grid grid-cols-3 sm:grid-cols-4 gap-2"></ul>
                     <p id="existingAttachmentsHint" class="text-xs text-gray-400 hidden"></p>
+                </div>
+
+                <!-- Categorize Section -->
+                <div class="bg-gray-900 border border-gray-700 rounded p-2">
+                    <button
+                        type="button"
+                        id="categorizeToggle"
+                        class="w-full flex items-center justify-between text-sm text-gray-300 hover:text-gray-100 transition"
+                    >
+                        <div class="flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                            </svg>
+                            <span id="categorizeToggleText">Categorize</span>
+                        </div>
+                        <svg id="categorizeChevron" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+
+                    <div id="categorizeFields" class="mt-2 pt-2 border-t border-gray-700 hidden">
+                        <div class="flex flex-wrap gap-2">
+                            @foreach($categories as $category)
+                                <label class="inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs cursor-pointer hover:bg-gray-800 transition">
+                                    <input type="checkbox" name="categories[]" value="{{ $category->id }}" class="w-3 h-3 rounded category-checkbox">
+                                    <span class="w-2 h-2 rounded-full" style="background-color: {{ $category->color }}"></span>
+                                    <span class="text-gray-300">{{ $category->name }}</span>
+                                </label>
+                            @endforeach
+                            @if($categories->isEmpty())
+                                <p class="text-xs text-gray-400">No categories yet. Create one in the sidebar!</p>
+                            @endif
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Compact Notification Toggle -->
@@ -150,17 +184,81 @@
             </form>
         </div>
 
-        <!-- Notes List -->
-        <div>
-            <h2 class="text-2xl font-bold text-gray-100 mb-6">All Notes</h2>
+        <!-- Notes List with Sidebar -->
+        <div class="flex gap-6">
+            <!-- Sidebar -->
+            <aside class="w-56 flex-shrink-0">
+                <div class="sticky top-4 bg-gray-800 border border-gray-700 rounded-lg p-4">
+                        <h2 class="text-lg font-bold text-gray-100 mb-4">Categories</h2>
 
-            @if($notes->isEmpty())
-                <div class="bg-gray-800 rounded-lg shadow-md p-6 border border-gray-700">
-                    <p class="text-gray-400 text-center py-8">No notes yet. Create your first note above!</p>
+                        <!-- Category List -->
+                        <ul id="categoryList" class="space-y-1 mb-4">
+                            <li>
+                                <button class="w-full text-left px-3 py-2 rounded text-sm text-gray-300 hover:bg-gray-700 transition category-filter active" data-category-id="all">
+                                    All Notes
+                                </button>
+                            </li>
+                            @foreach($categories as $category)
+                                <li class="group">
+                                    <div class="w-full flex items-center justify-between px-3 py-2 rounded text-sm text-gray-300 hover:bg-gray-700 transition">
+                                        <button class="flex items-center gap-2 flex-1 text-left category-filter" data-category-id="{{ $category->id }}">
+                                            <span class="w-2 h-2 rounded-full flex-shrink-0" style="background-color: {{ $category->color }}"></span>
+                                            <span class="truncate">{{ $category->name }}</span>
+                                        </button>
+                                        <button
+                                            onclick="deleteCategory({{ $category->id }})"
+                                            class="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 p-0.5 rounded hover:bg-red-900/30 transition flex-shrink-0 ml-2"
+                                            type="button"
+                                        >
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </li>
+                            @endforeach
+                        </ul>
+
+                        <!-- Add Category Form -->
+                        <div class="border-t border-gray-700 pt-4">
+                            <form id="addCategoryForm">
+                                @csrf
+                                <div class="flex gap-2 mb-3">
+                                    <input
+                                        type="text"
+                                        id="newCategoryName"
+                                        placeholder="New category..."
+                                        class="flex-1 px-2 py-1.5 bg-gray-900 border border-gray-600 text-gray-100 text-xs rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                                    >
+                                    <input
+                                        type="color"
+                                        id="newCategoryColor"
+                                        value="#3b82f6"
+                                        class="w-8 h-8 bg-gray-900 border border-gray-600 rounded cursor-pointer"
+                                        title="Pick a color"
+                                    >
+                                </div>
+                                <button
+                                    type="submit"
+                                    class="w-full bg-blue-600 text-white px-3 py-1.5 text-xs rounded hover:bg-blue-700 transition font-medium"
+                                >
+                                    + Add Category
+                                </button>
+                            </form>
+                        </div>
                 </div>
-            @else
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
-                    @foreach($notes as $note)
+            </aside>
+
+            <!-- Notes Grid -->
+            <div class="flex-1">
+
+                @if($notes->isEmpty())
+                    <div class="bg-gray-800 rounded-lg shadow-md p-6 border border-gray-700">
+                        <p class="text-gray-400 text-center py-8">No notes yet. Create your first note above!</p>
+                    </div>
+                @else
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
+                        @foreach($notes as $note)
                         <div class="bg-gray-800 border border-gray-700 rounded-lg shadow hover:shadow-lg transition-shadow group h-full flex flex-col">
                             <a href="#note-{{ $note->id }}" class="block p-4 note-link flex-1" data-note-id="{{ $note->id }}">
                                 <h3 class="text-lg font-semibold text-gray-100 mb-2 group-hover:text-blue-400 transition line-clamp-2">
@@ -180,6 +278,17 @@
                                     </div>
                                 @endif
 
+                                @if($note->categories->isNotEmpty())
+                                    <div class="flex flex-wrap gap-1 mb-2">
+                                        @foreach($note->categories as $category)
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium text-gray-200" style="background-color: {{ $category->color }}33; border: 1px solid {{ $category->color }}" data-category-id="{{ $category->id }}">
+                                                <span class="w-1.5 h-1.5 rounded-full" style="background-color: {{ $category->color }}"></span>
+                                                {{ $category->name }}
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                @endif
+
                                 @if($note->attachments && count($note->attachments) > 0)
                                     <div class="text-xs text-gray-400 mb-2">
                                         📎 {{ count($note->attachments) }} attachment(s)
@@ -187,34 +296,128 @@
                                 @endif
                             </a>
 
-                            <div class="mt-auto border-t border-gray-700 p-2 grid grid-cols-2 gap-2">
-                                <button
-                                    onclick="event.preventDefault(); editNote({{ $note->id }})"
-                                    class="w-full bg-yellow-600 text-white px-3 py-1.5 rounded hover:bg-yellow-700 transition text-xs font-medium"
-                                >
-                                    Edit
-                                </button>
-                                <form method="POST" action="{{ route('notes.destroy', $note) }}" onsubmit="return confirm('Are you sure you want to delete this note?');" class="w-full">
+                            <div class="mt-auto border-t border-gray-700 p-2 flex justify-end">
+                                <form method="POST" action="{{ route('notes.destroy', $note) }}" onsubmit="return confirm('Are you sure you want to delete this note?');">
                                     @csrf
                                     @method('DELETE')
                                     <button
                                         type="submit"
-                                        class="w-full bg-red-600 text-white px-3 py-1.5 rounded hover:bg-red-700 transition text-xs font-medium"
+                                        class="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded transition"
+                                        title="Delete note"
                                     >
-                                        Delete
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
                                     </button>
                                 </form>
                             </div>
                         </div>
-                    @endforeach
-                </div>
-            @endif
+                        @endforeach
+                    </div>
+                @endif
+            </div>
         </div>
     </div>
 
     <script>
         // Set timezone offset on page load
         document.getElementById('timezoneOffset').value = new Date().getTimezoneOffset();
+
+        // Category toggle
+        const categorizeToggle = document.getElementById('categorizeToggle');
+        const categorizeFields = document.getElementById('categorizeFields');
+        const categorizeChevron = document.getElementById('categorizeChevron');
+
+        categorizeToggle.addEventListener('click', function() {
+            const isHidden = categorizeFields.classList.contains('hidden');
+            if (isHidden) {
+                categorizeFields.classList.remove('hidden');
+                categorizeChevron.style.transform = 'rotate(180deg)';
+            } else {
+                categorizeFields.classList.add('hidden');
+                categorizeChevron.style.transform = 'rotate(0deg)';
+            }
+        });
+
+        // Add category
+        document.getElementById('addCategoryForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('newCategoryName').value.trim();
+            const color = document.getElementById('newCategoryColor').value;
+
+            if (!name) return;
+
+            try {
+                const response = await fetch('/categories', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({ name, color })
+                });
+
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    const data = await response.json();
+                    alert(data.message || 'Error creating category');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error creating category');
+            }
+        });
+
+        // Delete category
+        async function deleteCategory(categoryId) {
+            if (!confirm('Delete this category? Notes will not be deleted.')) return;
+
+            try {
+                const response = await fetch(`/categories/${categoryId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    }
+                });
+
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Error deleting category');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error deleting category');
+            }
+        }
+
+        // Category filtering
+        document.querySelectorAll('.category-filter').forEach(button => {
+            button.addEventListener('click', function() {
+                const categoryId = this.getAttribute('data-category-id');
+
+                // Update active state
+                document.querySelectorAll('.category-filter').forEach(btn => {
+                    btn.classList.remove('active', 'bg-gray-700');
+                });
+                this.classList.add('active', 'bg-gray-700');
+
+                // Filter notes
+                const notes = document.querySelectorAll('[data-note-id]');
+                notes.forEach(noteLink => {
+                    const noteCard = noteLink.closest('.bg-gray-800');
+                    if (categoryId === 'all') {
+                        noteCard.style.display = '';
+                    } else {
+                        // Check if note has this category
+                        const hasCategory = noteLink.querySelector(`[data-category-id="${categoryId}"]`);
+                        noteCard.style.display = hasCategory ? '' : 'none';
+                    }
+                });
+            });
+        });
 
         // Convert all UTC times to local time for display
         function convertUTCTimesToLocal() {
@@ -400,6 +603,19 @@
                 notificationToggleText.textContent = 'Set Reminder';
             }
 
+            // Set categories
+            document.querySelectorAll('.category-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            if (note.categories && Array.isArray(note.categories)) {
+                note.categories.forEach(category => {
+                    const checkbox = document.querySelector(`.category-checkbox[value="${category.id}"]`);
+                    if (checkbox) {
+                        checkbox.checked = true;
+                    }
+                });
+            }
+
             // Update form action and method
             const form = document.getElementById('noteForm');
             form.action = `/notes/${note.id}`;
@@ -430,6 +646,13 @@
             notificationFields.classList.add('hidden');
             notificationChevron.style.transform = 'rotate(0deg)';
             notificationToggleText.textContent = 'Set Reminder';
+
+            // Reset category fields
+            document.querySelectorAll('.category-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            categorizeFields.classList.add('hidden');
+            categorizeChevron.style.transform = 'rotate(0deg)';
 
             // Hide and clear existing attachments
             const attachmentsWrapper = document.getElementById('existingAttachmentsWrapper');

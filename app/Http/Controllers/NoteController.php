@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\Note;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -10,8 +11,9 @@ class NoteController extends Controller
 {
     public function index()
     {
-        $notes = Note::orderBy('created_at', 'desc')->get();
-        return view('notes.index', compact('notes'));
+        $notes = Note::with('categories')->orderBy('created_at', 'desc')->get();
+        $categories = Category::orderBy('order')->get();
+        return view('notes.index', compact('notes', 'categories'));
     }
 
     public function show(Note $note)
@@ -29,6 +31,8 @@ class NoteController extends Controller
             'notification_recurrence' => 'nullable|in:none,daily,weekly,monthly,yearly',
             'attachments.*' => 'nullable|file|max:10240', // 10MB max per file
             'timezone_offset' => 'nullable|integer', // Timezone offset in minutes
+            'categories' => 'nullable|array',
+            'categories.*' => 'exists:categories,id',
         ]);
 
         $attachmentPaths = [];
@@ -56,7 +60,7 @@ class NoteController extends Controller
                 ->addMinutes($timezoneOffset);
         }
 
-        Note::create([
+        $note = Note::create([
             'title' => $validated['title'],
             'content' => $validated['content'],
             'markdown_file_path' => '', // Will be set by the model
@@ -66,11 +70,17 @@ class NoteController extends Controller
             'notification_recurrence' => $validated['notification_recurrence'] === 'none' ? null : ($validated['notification_recurrence'] ?? null),
         ]);
 
+        // Attach categories if provided
+        if ($request->has('categories')) {
+            $note->categories()->sync($request->input('categories', []));
+        }
+
         return redirect()->route('notes.index')->with('success', 'Note created successfully!');
     }
 
     public function edit(Note $note)
     {
+        $note->load('categories');
         return response()->json($note);
     }
 
@@ -86,6 +96,8 @@ class NoteController extends Controller
             'timezone_offset' => 'nullable|integer', // Timezone offset in minutes
             'remove_attachments' => 'nullable|array',
             'remove_attachments.*' => 'string',
+            'categories' => 'nullable|array',
+            'categories.*' => 'exists:categories,id',
         ]);
 
         $attachmentPaths = $note->attachments ?? [];
@@ -142,6 +154,9 @@ class NoteController extends Controller
         }
 
         $note->update($updateData);
+
+        // Sync categories
+        $note->categories()->sync($request->input('categories', []));
 
         return redirect()->route('notes.index')->with('success', 'Note updated successfully!');
     }
