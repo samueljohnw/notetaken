@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "https://notetaken.on-forge.com/api"
+      "url": "http://206.189.199.158/api"
     }
   ],
   "components": {
