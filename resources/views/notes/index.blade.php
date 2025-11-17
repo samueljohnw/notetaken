@@ -272,28 +272,6 @@
 
                                 <p class="text-sm text-gray-300 mb-3 line-clamp-3 whitespace-pre-wrap">{{ $note->content }}</p>
 
-                                @if($note->has_notification)
-                                    <div class="mb-2 notification-badge" data-notification-time="{{ $note->notification_datetime->toIso8601String() }}" data-note-id="{{ $note->id }}">
-                                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-900 text-blue-200 border border-blue-700">
-                                            🔔 <span class="local-time ml-1" data-utc="{{ $note->notification_datetime->toIso8601String() }}">{{ $note->notification_datetime->format('M d, Y g:i A') }}</span>
-                                            @if($note->notification_recurrence)
-                                                <span class="ml-1">({{ ucfirst($note->notification_recurrence) }})</span>
-                                            @endif
-                                        </span>
-                                    </div>
-                                @endif
-
-                                @if($note->categories->isNotEmpty())
-                                    <div class="flex flex-wrap gap-1 mb-2">
-                                        @foreach($note->categories as $category)
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium text-gray-200" style="background-color: {{ $category->color }}33; border: 1px solid {{ $category->color }}" data-category-id="{{ $category->id }}">
-                                                <span class="w-1.5 h-1.5 rounded-full" style="background-color: {{ $category->color }}"></span>
-                                                {{ $category->name }}
-                                            </span>
-                                        @endforeach
-                                    </div>
-                                @endif
-
                                 @if($note->attachments && count($note->attachments) > 0)
                                     <div class="text-xs text-gray-400 mb-2">
                                         📎 {{ count($note->attachments) }} attachment(s)
@@ -301,13 +279,35 @@
                                 @endif
                             </a>
 
-                            <div class="mt-auto border-t border-gray-700 p-2 flex justify-end">
+                            <div class="mt-auto border-t border-gray-700 p-2 flex items-center justify-between gap-2">
+                                <div class="flex flex-wrap items-center gap-1.5">
+                                    @if($note->has_notification)
+                                        <div class="notification-badge" data-notification-time="{{ $note->notification_datetime->toIso8601String() }}" data-note-id="{{ $note->id }}">
+                                            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-900 text-blue-200 border border-blue-700">
+                                                🔔 <span class="local-time ml-1" data-utc="{{ $note->notification_datetime->toIso8601String() }}">{{ $note->notification_datetime->format('M d, Y g:i A') }}</span>
+                                                @if($note->notification_recurrence)
+                                                    <span class="ml-1">({{ ucfirst($note->notification_recurrence) }})</span>
+                                                @endif
+                                            </span>
+                                        </div>
+                                    @endif
+
+                                    @if($note->categories->isNotEmpty())
+                                        @foreach($note->categories as $category)
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium text-gray-200" style="background-color: {{ $category->color }}33; border: 1px solid {{ $category->color }}" data-category-id="{{ $category->id }}">
+                                                <span class="w-1.5 h-1.5 rounded-full" style="background-color: {{ $category->color }}"></span>
+                                                {{ $category->name }}
+                                            </span>
+                                        @endforeach
+                                    @endif
+                                </div>
+
                                 <form method="POST" action="{{ route('notes.destroy', $note) }}" onsubmit="return confirm('Are you sure you want to delete this note?');">
                                     @csrf
                                     @method('DELETE')
                                     <button
                                         type="submit"
-                                        class="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded transition"
+                                        class="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded transition flex-shrink-0"
                                         title="Delete note"
                                     >
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
