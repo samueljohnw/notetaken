@@ -184,80 +184,85 @@
             </form>
         </div>
 
-        <!-- Notes List with Sidebar -->
-        <div class="flex gap-6">
-            <!-- Sidebar -->
-            <aside class="w-56 flex-shrink-0">
-                <div class="sticky top-4 bg-gray-800 border border-gray-700 rounded-lg p-4">
-                        <h2 class="text-lg font-bold text-gray-100 mb-4">Categories</h2>
+        <!-- Collapsible Categories -->
+        <div class="mb-6">
+            <button
+                id="categoriesToggle"
+                class="w-full flex items-center justify-between px-4 py-2 bg-gray-800/50 border border-gray-700/50 rounded-lg text-sm font-medium text-gray-300 hover:bg-gray-800 transition"
+            >
+                <span>Categories</span>
+                <svg id="categoriesChevron" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
 
-                        <!-- Category List -->
-                        <ul id="categoryList" class="space-y-1 mb-4">
-                            <li>
-                                <button class="w-full text-left px-3 py-2 rounded text-sm text-gray-300 hover:bg-gray-700 transition category-filter active" data-category-id="all">
-                                    All Notes
+            <div id="categoriesContent" class="hidden mt-2 p-4 bg-gray-800/30 border border-gray-700/30 rounded-lg">
+                <!-- Category List -->
+                <ul id="categoryList" class="space-y-0.5 mb-3">
+                    <li>
+                        <button class="w-full text-left px-2 py-1.5 rounded text-xs text-gray-300 hover:bg-gray-800/50 transition category-filter active" data-category-id="all">
+                            All Notes
+                        </button>
+                    </li>
+                    @foreach($categories as $category)
+                        <li class="group">
+                            <div class="w-full flex items-center justify-between px-2 py-1.5 rounded text-xs text-gray-300 hover:bg-gray-800/50 transition">
+                                <button class="flex items-center gap-1.5 flex-1 text-left category-filter" data-category-id="{{ $category->id }}">
+                                    <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background-color: {{ $category->color }}"></span>
+                                    <span class="truncate">{{ $category->name }}</span>
                                 </button>
-                            </li>
-                            @foreach($categories as $category)
-                                <li class="group">
-                                    <div class="w-full flex items-center justify-between px-3 py-2 rounded text-sm text-gray-300 hover:bg-gray-700 transition">
-                                        <button class="flex items-center gap-2 flex-1 text-left category-filter" data-category-id="{{ $category->id }}">
-                                            <span class="w-2 h-2 rounded-full flex-shrink-0" style="background-color: {{ $category->color }}"></span>
-                                            <span class="truncate">{{ $category->name }}</span>
-                                        </button>
-                                        <button
-                                            onclick="deleteCategory({{ $category->id }})"
-                                            class="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 p-0.5 rounded hover:bg-red-900/30 transition flex-shrink-0 ml-2"
-                                            type="button"
-                                        >
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </li>
-                            @endforeach
-                        </ul>
-
-                        <!-- Add Category Form -->
-                        <div class="border-t border-gray-700 pt-4">
-                            <form id="addCategoryForm">
-                                @csrf
-                                <div class="flex gap-2 mb-3">
-                                    <input
-                                        type="text"
-                                        id="newCategoryName"
-                                        placeholder="New category..."
-                                        class="flex-1 px-2 py-1.5 bg-gray-900 border border-gray-600 text-gray-100 text-xs rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                                    >
-                                    <input
-                                        type="color"
-                                        id="newCategoryColor"
-                                        value="#3b82f6"
-                                        class="w-8 h-8 bg-gray-900 border border-gray-600 rounded cursor-pointer"
-                                        title="Pick a color"
-                                    >
-                                </div>
                                 <button
-                                    type="submit"
-                                    class="w-full bg-blue-600 text-white px-3 py-1.5 text-xs rounded hover:bg-blue-700 transition font-medium"
+                                    onclick="deleteCategory({{ $category->id }})"
+                                    class="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 p-0.5 rounded hover:bg-red-900/30 transition flex-shrink-0 ml-1"
+                                    type="button"
                                 >
-                                    + Add Category
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
                                 </button>
-                            </form>
+                            </div>
+                        </li>
+                    @endforeach
+                </ul>
+
+                <!-- Add Category Form -->
+                <div class="border-t border-gray-700/50 pt-3 mt-1">
+                    <form id="addCategoryForm">
+                        @csrf
+                        <div class="flex gap-1.5 mb-2">
+                            <input
+                                type="text"
+                                id="newCategoryName"
+                                placeholder="New category..."
+                                class="flex-1 px-2 py-1 bg-gray-800/50 border border-gray-600/50 text-gray-100 text-xs rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                            >
+                            <input
+                                type="color"
+                                id="newCategoryColor"
+                                value="#3b82f6"
+                                class="w-7 h-7 bg-gray-800/50 border border-gray-600/50 rounded cursor-pointer"
+                                title="Pick a color"
+                            >
                         </div>
+                        <button
+                            type="submit"
+                            class="w-full bg-blue-600 text-white px-2 py-1 text-xs rounded hover:bg-blue-700 transition font-medium"
+                        >
+                            + Add
+                        </button>
+                    </form>
                 </div>
-            </aside>
+            </div>
+        </div>
 
-            <!-- Notes Grid -->
-            <div class="flex-1">
-
-                @if($notes->isEmpty())
+        <!-- Notes Grid -->
+        <div>
+            @if($notes->isEmpty())
                     <div class="bg-gray-800 rounded-lg shadow-md p-6 border border-gray-700">
                         <p class="text-gray-400 text-center py-8">No notes yet. Create your first note above!</p>
                     </div>
                 @else
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
                         @foreach($notes as $note)
                         <div class="bg-gray-800 border border-gray-700 rounded-lg shadow hover:shadow-lg transition-shadow group h-full flex flex-col">
                             <a href="#note-{{ $note->id }}" class="block p-4 note-link flex-1" data-note-id="{{ $note->id }}">
@@ -315,13 +320,28 @@
                         @endforeach
                     </div>
                 @endif
-            </div>
         </div>
     </div>
 
     <script>
         // Set timezone offset on page load
         document.getElementById('timezoneOffset').value = new Date().getTimezoneOffset();
+
+        // Categories accordion toggle
+        const categoriesToggle = document.getElementById('categoriesToggle');
+        const categoriesContent = document.getElementById('categoriesContent');
+        const categoriesChevron = document.getElementById('categoriesChevron');
+
+        categoriesToggle.addEventListener('click', function() {
+            const isHidden = categoriesContent.classList.contains('hidden');
+            if (isHidden) {
+                categoriesContent.classList.remove('hidden');
+                categoriesChevron.style.transform = 'rotate(180deg)';
+            } else {
+                categoriesContent.classList.add('hidden');
+                categoriesChevron.style.transform = 'rotate(0deg)';
+            }
+        });
 
         // Category toggle
         const categorizeToggle = document.getElementById('categorizeToggle');
