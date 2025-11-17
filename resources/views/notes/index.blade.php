@@ -591,8 +591,9 @@
             // Set notification fields
             if (note.has_notification) {
                 hasNotificationInput.value = '1';
-                notificationFields.classList.remove('hidden');
-                notificationChevron.style.transform = 'rotate(180deg)';
+                // Keep fields collapsed
+                notificationFields.classList.add('hidden');
+                notificationChevron.style.transform = 'rotate(0deg)';
 
                 if (note.notification_datetime) {
                     // Convert UTC to local datetime-local format
