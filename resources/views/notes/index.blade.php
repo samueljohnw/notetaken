@@ -17,126 +17,135 @@
         @endif
 
         <!-- Create/Edit Note Form -->
-        <div class="bg-gray-800 rounded-lg shadow-md p-6 mb-8 border border-gray-700">
-            <h1 class="text-3xl font-bold text-gray-100 mb-6">Notes</h1>
+        <div class="bg-gray-800 rounded-lg shadow-md p-4 mb-8 border border-gray-700 max-w-2xl mx-auto">
+            <h1 class="text-xl font-bold text-gray-100 mb-3">Quick Note</h1>
 
-            <form id="noteForm" method="POST" action="{{ route('notes.store') }}" enctype="multipart/form-data" class="space-y-4">
+            <form id="noteForm" method="POST" action="{{ route('notes.store') }}" enctype="multipart/form-data" class="space-y-3">
                 @csrf
                 <input type="hidden" name="_method" value="POST" id="formMethod">
                 <input type="hidden" name="note_id" id="noteId">
                 <input type="hidden" name="timezone_offset" id="timezoneOffset">
+                <input type="file" name="attachments[]" id="attachments" multiple class="hidden">
 
                 <!-- Title Field -->
                 <div>
-                    <label for="title" class="block text-sm font-medium text-gray-300 mb-2">Title</label>
                     <input
                         type="text"
                         name="title"
                         id="title"
                         required
-                        class="w-full px-4 py-2 bg-gray-900 border border-gray-600 text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                        placeholder="Enter note title"
+                        class="w-full px-3 py-2 bg-gray-900 border border-gray-600 text-gray-100 text-lg font-semibold rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                        placeholder="Title"
                     >
                     @error('title')
-                        <p class="text-red-400 text-sm mt-1">{{ $message }}</p>
+                        <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
                 <!-- Content Textarea -->
                 <div>
-                    <label for="content" class="block text-sm font-medium text-gray-300 mb-2">Content (Markdown)</label>
                     <textarea
                         name="content"
                         id="content"
-                        rows="12"
+                        rows="6"
                         required
-                        class="w-full px-4 py-2 bg-gray-900 border border-gray-600 text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition font-mono text-sm"
-                        placeholder="Write your note in markdown..."
+                        class="w-full px-3 py-2 bg-gray-900 border border-gray-600 text-gray-100 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm resize-none"
+                        placeholder="Write your note..."
                     ></textarea>
                     @error('content')
-                        <p class="text-red-400 text-sm mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <!-- File Upload -->
-                <div>
-                    <label for="attachments" class="block text-sm font-medium text-gray-300 mb-2">Attachments (Images/Files)</label>
-                    <input
-                        type="file"
-                        name="attachments[]"
-                        id="attachments"
-                        multiple
-                        class="w-full px-4 py-2 bg-gray-900 border border-gray-600 text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700"
-                    >
-                    <p class="text-gray-400 text-sm mt-1">Max 10MB per file</p>
-                    @error('attachments.*')
-                        <p class="text-red-400 text-sm mt-1">{{ $message }}</p>
+                        <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
                 <!-- Existing Attachments (shown when editing) -->
-                <div id="existingAttachmentsWrapper" class="bg-gray-900 border border-gray-700 rounded-lg p-4 space-y-3 hidden">
-                    <h3 class="text-sm font-medium text-gray-300">Existing Attachments</h3>
-                    <ul id="existingAttachments" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"></ul>
+                <div id="existingAttachmentsWrapper" class="bg-gray-900 border border-gray-700 rounded p-3 space-y-2 hidden">
+                    <h3 class="text-xs font-medium text-gray-300">Existing Attachments</h3>
+                    <ul id="existingAttachments" class="grid grid-cols-3 sm:grid-cols-4 gap-2"></ul>
                     <p id="existingAttachmentsHint" class="text-xs text-gray-400 hidden"></p>
                 </div>
 
-                <!-- Notification Settings -->
-                <div class="bg-gray-900 border border-gray-700 rounded-lg p-4 space-y-3">
-                    <div class="flex items-center">
-                        <input
-                            type="checkbox"
-                            name="has_notification"
-                            id="hasNotification"
-                            value="1"
-                            class="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500"
+                <!-- Compact Notification Toggle -->
+                <div class="bg-gray-900 border border-gray-700 rounded p-2">
+                    <button
+                        type="button"
+                        id="notificationToggle"
+                        class="w-full flex items-center justify-between text-sm text-gray-300 hover:text-gray-100 transition"
+                    >
+                        <div class="flex items-center gap-2">
+                            <span class="text-lg">🔔</span>
+                            <span id="notificationToggleText">Set Reminder</span>
+                        </div>
+                        <svg id="notificationChevron" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+
+                    <div id="notificationFields" class="space-y-2 mt-2 pt-2 border-t border-gray-700 hidden">
+                        <input type="hidden" name="has_notification" id="hasNotification" value="0">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <input
+                                    type="datetime-local"
+                                    name="notification_datetime"
+                                    id="notificationDatetime"
+                                    class="w-full px-2 py-1.5 bg-gray-800 border border-gray-600 text-gray-100 text-xs rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                                >
+                            </div>
+                            <div>
+                                <select
+                                    name="notification_recurrence"
+                                    id="notificationRecurrence"
+                                    class="w-full px-2 py-1.5 bg-gray-800 border border-gray-600 text-gray-100 text-xs rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                                >
+                                    <option value="none">Once</option>
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly">Weekly</option>
+                                    <option value="monthly">Monthly</option>
+                                    <option value="yearly">Yearly</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            id="clearNotification"
+                            class="text-xs text-red-400 hover:text-red-300 transition"
                         >
-                        <label for="hasNotification" class="ml-2 text-sm font-medium text-gray-300">Set notification reminder</label>
-                    </div>
-
-                    <div id="notificationFields" class="space-y-3 hidden">
-                        <div>
-                            <label for="notificationDatetime" class="block text-sm font-medium text-gray-300 mb-2">Notification Date & Time</label>
-                            <input
-                                type="datetime-local"
-                                name="notification_datetime"
-                                id="notificationDatetime"
-                                class="w-full px-4 py-2 bg-gray-800 border border-gray-600 text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                            >
-                        </div>
-
-                        <div>
-                            <label for="notificationRecurrence" class="block text-sm font-medium text-gray-300 mb-2">Recurrence</label>
-                            <select
-                                name="notification_recurrence"
-                                id="notificationRecurrence"
-                                class="w-full px-4 py-2 bg-gray-800 border border-gray-600 text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                            >
-                                <option value="none">None (One-time)</option>
-                                <option value="daily">Daily</option>
-                                <option value="weekly">Weekly</option>
-                                <option value="monthly">Monthly</option>
-                                <option value="yearly">Yearly</option>
-                            </select>
-                        </div>
+                            Clear reminder
+                        </button>
                     </div>
                 </div>
 
-                <!-- Submit Button -->
-                <div class="flex gap-2">
-                    <button
-                        type="submit"
-                        class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium"
-                    >
-                        <span id="submitButtonText">Create Note</span>
-                    </button>
-                    <button
-                        type="button"
-                        id="cancelEdit"
-                        class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition font-medium hidden"
-                    >
-                        Cancel
-                    </button>
+                <!-- Bottom Action Bar -->
+                <div class="flex items-center justify-between gap-2 pt-1">
+                    <div class="flex items-center gap-2">
+                        <button
+                            type="button"
+                            onclick="document.getElementById('attachments').click()"
+                            class="text-gray-400 hover:text-gray-200 transition p-1.5 rounded hover:bg-gray-700"
+                            title="Attach files"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                            </svg>
+                        </button>
+                        <span id="attachmentCount" class="text-xs text-gray-400 hidden"></span>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button
+                            type="button"
+                            id="cancelEdit"
+                            class="bg-gray-700 text-gray-300 px-4 py-1.5 text-sm rounded hover:bg-gray-600 transition hidden"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            class="bg-blue-600 text-white px-4 py-1.5 text-sm rounded hover:bg-blue-700 transition font-medium"
+                        >
+                            <span id="submitButtonText">Save Note</span>
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -229,13 +238,21 @@
         // Run on page load
         convertUTCTimesToLocal();
 
-        // Notification checkbox toggle
-        const hasNotificationCheckbox = document.getElementById('hasNotification');
+        // Notification toggle button
+        const notificationToggle = document.getElementById('notificationToggle');
         const notificationFields = document.getElementById('notificationFields');
+        const notificationChevron = document.getElementById('notificationChevron');
+        const notificationToggleText = document.getElementById('notificationToggleText');
+        const hasNotificationInput = document.getElementById('hasNotification');
+        const clearNotificationBtn = document.getElementById('clearNotification');
 
-        hasNotificationCheckbox.addEventListener('change', function() {
-            if (this.checked) {
+        notificationToggle.addEventListener('click', function() {
+            const isHidden = notificationFields.classList.contains('hidden');
+
+            if (isHidden) {
                 notificationFields.classList.remove('hidden');
+                notificationChevron.style.transform = 'rotate(180deg)';
+                hasNotificationInput.value = '1';
 
                 // Set default datetime to current time if empty
                 const datetimeInput = document.getElementById('notificationDatetime');
@@ -250,6 +267,29 @@
                 }
             } else {
                 notificationFields.classList.add('hidden');
+                notificationChevron.style.transform = 'rotate(0deg)';
+                hasNotificationInput.value = '0';
+            }
+        });
+
+        clearNotificationBtn.addEventListener('click', function() {
+            document.getElementById('notificationDatetime').value = '';
+            document.getElementById('notificationRecurrence').value = 'none';
+            notificationFields.classList.add('hidden');
+            notificationChevron.style.transform = 'rotate(0deg)';
+            hasNotificationInput.value = '0';
+            notificationToggleText.textContent = 'Set Reminder';
+        });
+
+        // Attachment file input change handler
+        document.getElementById('attachments').addEventListener('change', function(e) {
+            const count = e.target.files.length;
+            const counter = document.getElementById('attachmentCount');
+            if (count > 0) {
+                counter.textContent = `${count} file${count > 1 ? 's' : ''} selected`;
+                counter.classList.remove('hidden');
+            } else {
+                counter.classList.add('hidden');
             }
         });
 
@@ -327,8 +367,9 @@
 
             // Set notification fields
             if (note.has_notification) {
-                document.getElementById('hasNotification').checked = true;
+                hasNotificationInput.value = '1';
                 notificationFields.classList.remove('hidden');
+                notificationChevron.style.transform = 'rotate(180deg)';
 
                 if (note.notification_datetime) {
                     // Convert UTC to local datetime-local format
@@ -341,18 +382,29 @@
                     const minutes = String(date.getMinutes()).padStart(2, '0');
                     const localDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
                     document.getElementById('notificationDatetime').value = localDateTime;
+
+                    // Update toggle text to show notification is set
+                    const dateFormatted = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    notificationToggleText.textContent = `Reminder: ${dateFormatted}`;
                 }
 
                 if (note.notification_recurrence) {
                     document.getElementById('notificationRecurrence').value = note.notification_recurrence;
+                } else {
+                    document.getElementById('notificationRecurrence').value = 'none';
                 }
+            } else {
+                hasNotificationInput.value = '0';
+                notificationFields.classList.add('hidden');
+                notificationChevron.style.transform = 'rotate(0deg)';
+                notificationToggleText.textContent = 'Set Reminder';
             }
 
             // Update form action and method
             const form = document.getElementById('noteForm');
             form.action = `/notes/${note.id}`;
             document.getElementById('formMethod').value = 'PUT';
-            document.getElementById('submitButtonText').textContent = 'Update Note';
+            document.getElementById('submitButtonText').textContent = 'Update';
             document.getElementById('cancelEdit').classList.remove('hidden');
 
             // Scroll to form
@@ -370,15 +422,23 @@
             form.action = '{{ route("notes.store") }}';
             document.getElementById('formMethod').value = 'POST';
             document.getElementById('noteId').value = '';
-            document.getElementById('submitButtonText').textContent = 'Create Note';
+            document.getElementById('submitButtonText').textContent = 'Save Note';
             document.getElementById('cancelEdit').classList.add('hidden');
+
+            // Reset notification fields
+            hasNotificationInput.value = '0';
             notificationFields.classList.add('hidden');
+            notificationChevron.style.transform = 'rotate(0deg)';
+            notificationToggleText.textContent = 'Set Reminder';
 
             // Hide and clear existing attachments
             const attachmentsWrapper = document.getElementById('existingAttachmentsWrapper');
             const attachmentsList = document.getElementById('existingAttachments');
             attachmentsList.innerHTML = '';
             attachmentsWrapper.classList.add('hidden');
+
+            // Reset attachment counter
+            document.getElementById('attachmentCount').classList.add('hidden');
         }
 
         // Simple image preview modal
