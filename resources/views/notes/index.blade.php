@@ -161,7 +161,7 @@
                                 <p class="text-sm text-gray-300 mb-3 line-clamp-3 whitespace-pre-wrap">{{ $note->content }}</p>
 
                                 @if($note->has_notification)
-                                    <div class="mb-2">
+                                    <div class="mb-2 notification-badge" data-notification-time="{{ $note->notification_datetime->toIso8601String() }}" data-note-id="{{ $note->id }}">
                                         <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-900 text-blue-200 border border-blue-700">
                                             🔔 <span class="local-time ml-1" data-utc="{{ $note->notification_datetime->toIso8601String() }}">{{ $note->notification_datetime->format('M d, Y g:i A') }}</span>
                                             @if($note->notification_recurrence)
@@ -432,6 +432,33 @@
                 editNote(noteId);
             }
         });
+
+        // Auto-hide expired notification badges
+        function checkExpiredNotifications() {
+            const now = new Date();
+            const badges = document.querySelectorAll('.notification-badge');
+
+            badges.forEach(badge => {
+                const notificationTime = new Date(badge.getAttribute('data-notification-time'));
+
+                // If the notification time has passed, hide the badge with a fade-out effect
+                if (now > notificationTime) {
+                    badge.style.transition = 'opacity 0.5s ease-out';
+                    badge.style.opacity = '0';
+
+                    // Remove from DOM after fade-out completes
+                    setTimeout(() => {
+                        badge.remove();
+                    }, 500);
+                }
+            });
+        }
+
+        // Check immediately on page load
+        checkExpiredNotifications();
+
+        // Check every 10 seconds for expired notifications
+        setInterval(checkExpiredNotifications, 10000);
     </script>
     
     <!-- Image Modal -->
