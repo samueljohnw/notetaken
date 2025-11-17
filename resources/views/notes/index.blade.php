@@ -171,7 +171,7 @@
                 </div>
 
                 <!-- Content Textarea (Note Mode) -->
-                <div id="noteContentWrapper">
+                <div id="noteContentWrapper" style="min-height: 200px;">
                     <textarea
                         name="content"
                         id="content"
@@ -185,8 +185,8 @@
                 </div>
 
                 <!-- Checklist Items (Checklist Mode) -->
-                <div id="checklistWrapper" class="hidden">
-                    <div class="bg-gray-900 border border-gray-600 rounded p-3 space-y-2" id="checklistContainer">
+                <div id="checklistWrapper" class="hidden" style="min-height: 200px;">
+                    <div class="bg-gray-900 border border-gray-600 rounded p-3 space-y-2 min-h-[160px]" id="checklistContainer">
                         <!-- Checklist items will be added here dynamically -->
                     </div>
                     <button
