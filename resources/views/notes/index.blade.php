@@ -519,7 +519,7 @@
                 element: document.getElementById('content'),
                 spellChecker: false,
                 status: false,
-                placeholder: 'Write your note... Use markdown syntax:\n**bold** *italic* \n- [ ] Task list\n- [x] Completed task',
+                placeholder: 'Write your note... ',
                 minHeight: '200px',
                 toolbar: [
                     'bold', 'italic', 'heading', '|',
@@ -564,7 +564,7 @@
                 autosaveStatus.classList.add('text-red-400');
                 autosaveStatus.classList.remove('text-gray-400', 'text-green-400');
             } else if (message.includes('Saved')) {
-                autosaveStatus.classList.add('text-green-400');
+                autosaveStatus.classList.add('text-white-400');
                 autosaveStatus.classList.remove('text-gray-400', 'text-red-400');
             } else {
                 autosaveStatus.classList.add('text-gray-400');
