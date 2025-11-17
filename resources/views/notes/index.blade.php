@@ -18,7 +18,7 @@
 
         <!-- Create/Edit Note Form -->
         <div class="bg-gray-800 rounded-lg shadow-md p-4 mb-8 border border-gray-700 max-w-2xl mx-auto">
-            <h1 class="text-xl font-bold text-gray-100 mb-3">Quick Note</h1>
+            <h1 class="text-xl font-bold text-gray-100 mb-3"><a href="/">Quick Note</a></h1>
 
             <form id="noteForm" method="POST" action="{{ route('notes.store') }}" enctype="multipart/form-data" class="space-y-3">
                 @csrf
